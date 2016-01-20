@@ -17,7 +17,9 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
 public class FileUtils {
 
     public static final Pattern REGEX_VALUES = Pattern.compile("values(-[a-z]{2})?");
-    private static final Pattern REGEX_TRANSLATED_FILE = Pattern.compile("strings_([a-z]){2}\\.xml");
+    private static final Pattern REGEX_TRANSLATED_FILE = Pattern.compile("strings_([a-z]{2})\\.xml");
     public static final String STRINGS_FILENAME = "strings.xml";private static final String NODE_STRING = "string";
     public static final String NODE_PLURALS = "plurals";
     public static final String NODE_RESOURCES = "resources";
@@ -66,7 +68,6 @@ public class FileUtils {
             } catch (IndexOutOfBoundsException e) {
                 // no locale (e.g. just values/)
             }
-            System.out.println("Found match: " + file.getName() + " ==> " + (locale == null ? "default" : locale));
 
             File stringsFile = new File(file, STRINGS_FILENAME);
             stringFiles.put(locale, stringsFile.exists() ? stringsFile : null);
@@ -86,12 +87,13 @@ public class FileUtils {
         Map<String, File> stringFiles = new HashMap<>();
         for (File file : files) {
             Matcher matcher = REGEX_TRANSLATED_FILE.matcher(file.getName());
-            try {
-                String locale = matcher.group(1);
-                System.out.println("Found match: " + file.getName() + " ==> " + (locale == null ? "default" : locale));
-                stringFiles.put(locale, file);
-            } catch (IndexOutOfBoundsException e) {
-                // no locale (e.g. just values/)
+            if (matcher.matches()) {
+                try {
+                    String locale = matcher.group(1);
+                    stringFiles.put(locale, file);
+                } catch (IndexOutOfBoundsException e) {
+                    // no locale (e.g. just values/)
+                }
             }
         }
         return stringFiles;
@@ -106,7 +108,20 @@ public class FileUtils {
      * @throws SAXException
      */
     public static Map<String, String> parseStrings(File stringsFile) throws ParserConfigurationException, IOException, SAXException {
-        Map<String, String> stringMap = new HashMap<>();
+        return parseStrings(stringsFile, true);
+    }
+
+    /**
+     * Parses a strings.xml file into a map of name --> value.
+     * @param stringsFile
+     * @param sorted whether the map implementation should be sorted alphabetically
+     * @return
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws SAXException
+     */
+    public static Map<String, String> parseStrings(File stringsFile, boolean sorted) throws ParserConfigurationException, IOException, SAXException {
+        Map<String, String> stringMap = sorted ? new TreeMap<String, String>() : new LinkedHashMap<String, String>();
         Document xmlStringsFile = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stringsFile);
         xmlStringsFile.getDocumentElement().normalize();
         NodeList nodes = xmlStringsFile.getElementsByTagName(NODE_STRING);

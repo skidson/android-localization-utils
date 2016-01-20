@@ -49,11 +49,12 @@ public class Apply implements Action {
             }
 
             Map<String, String> projectStrings = FileUtils.parseStrings(projectStringFile);
+            // TODO adding new translations will alter insertion order for LinkedHashMap
             int existingSize = projectStrings.size();
             projectStrings.putAll(translatedStrings);
             FileUtils.output(projectStringFile, projectStrings);
 
-            System.out.println("Wrote " + translatedStrings.size() + " strings to " + projectStringFile.getParent() +
+            System.out.println("Wrote " + translatedStrings.size() + " strings to " + projectStringFile.getParentFile().getName() +
                     "/" + projectStringFile.getName() + " (" + (projectStrings.size() - existingSize)+ " new)");
         }
     }
