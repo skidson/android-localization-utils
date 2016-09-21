@@ -30,7 +30,8 @@ public class FileUtils {
 
     public static final Pattern REGEX_VALUES = Pattern.compile("values(-[a-z]{2})?");
     private static final Pattern REGEX_TRANSLATED_FILE = Pattern.compile("strings_([a-z]{2})\\.xml");
-    public static final String STRINGS_FILENAME = "strings.xml";private static final String NODE_STRING = "string";
+    public static final String STRINGS_FILENAME = "strings.xml";
+    private static final String NODE_STRING = "string";
     public static final String NODE_PLURALS = "plurals";
     public static final String NODE_RESOURCES = "resources";
     public static final String ATTR_NAME = "name";

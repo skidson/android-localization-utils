@@ -2,6 +2,7 @@ package com.skidson.android.localization;
 
 import com.skidson.android.localization.action.Action;
 import com.skidson.android.localization.action.Apply;
+import com.skidson.android.localization.action.Diff;
 import com.skidson.android.localization.action.Identify;
 
 import java.util.*;
@@ -13,7 +14,8 @@ import java.util.*;
 public enum Command {
 
     APPLY(new Apply(), "apply"),
-    IDENTIFY(new Identify(), "identify", "find", "generate");
+    IDENTIFY(new Identify(), "identify", "find", "generate"),
+    DIFF(new Diff(), "diff");
 
     private static final Map<String, Command> STRING_MAP;
     static {
