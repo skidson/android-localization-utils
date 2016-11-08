@@ -18,6 +18,10 @@ repositories {
 }
 
 // In this section you declare the dependencies for your production and test code
+//noinspection GroovyAssignabilityCheck
 dependencies {
+    def log4JVersion = 2.7
+    compile "org.apache.logging.log4j:log4j-api:${log4JVersion}"
+    compile "org.apache.logging.log4j:log4j-core:${log4JVersion}"
     testCompile 'junit:junit:4.12'
 }

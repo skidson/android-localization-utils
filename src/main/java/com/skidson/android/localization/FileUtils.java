@@ -17,8 +17,10 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +41,7 @@ public class FileUtils {
     private static final String OUTPUT_KEY_INDENT_AMOUNT = "{http://xml.apache.org/xslt}indent-amount";
     private static final String OUTPUT_VALUE_INDENT_AMOUNT = "4";
     private static final String YES = "yes";
+    private static final String ENCODING = "UTF-8";
 
     /**
      * Returns a map of XX --> values-XX/strings.xml where XX is the locale. The map will include an entry for the
@@ -122,7 +125,7 @@ public class FileUtils {
      * @throws SAXException
      */
     public static Map<String, String> parseStrings(File stringsFile, boolean sorted) throws ParserConfigurationException, IOException, SAXException {
-        Map<String, String> stringMap = sorted ? new TreeMap<String, String>() : new LinkedHashMap<String, String>();
+        Map<String, String> stringMap = sorted ? new TreeMap<>() : new LinkedHashMap<>();
         Document xmlStringsFile = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stringsFile);
         xmlStringsFile.getDocumentElement().normalize();
         NodeList nodes = xmlStringsFile.getElementsByTagName(NODE_STRING);
@@ -142,6 +145,58 @@ public class FileUtils {
     }
 
     /**
+     * Updates a strings.xml file with new values without altering the order or comments.
+     * @param stringsFile
+     * @param updates the map of string keys to updated values
+     * @return
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws SAXException
+     */
+    public static int update(File stringsFile, Map<String, String> updates) throws ParserConfigurationException, TransformerException, IOException, SAXException {
+        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(stringsFile);
+        document.getDocumentElement().normalize();
+
+        Set<String> newTranslations = new HashSet<>();
+        newTranslations.addAll(updates.keySet());
+
+        int updated = 0;
+        NodeList nodes = document.getElementsByTagName(NODE_STRING);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element e = (Element) node;
+                String key = e.getAttribute(ATTR_NAME);
+                String updatedValue = updates.get(key);
+                if (updatedValue != null) {
+                    updated++;
+                    e.setTextContent(updatedValue);
+                }
+
+                newTranslations.remove(key);
+            }
+        }
+
+        // append new translations to the bottom
+        if (!newTranslations.isEmpty()) {
+            Element root = document.getDocumentElement();
+            root.appendChild(document.createTextNode("\t"));
+            for (String key : newTranslations) {
+                Element e = document.createElement(NODE_STRING);
+                e.setAttribute(ATTR_NAME, key);
+                e.appendChild(document.createTextNode(updates.get(key)));
+                root.appendChild(e);
+                updated++;
+            }
+        }
+
+        // TODO plurals
+
+        getStringsXmlTransformer().transform(new DOMSource(document), new StreamResult(stringsFile));
+        return updated;
+    }
+
+    /**
      * Outputs the map of strings to the specified file.
      * @param outputFile
      * @param strings
@@ -150,21 +205,27 @@ public class FileUtils {
      */
     public static void output(File outputFile, Map<String, String> strings) throws ParserConfigurationException, TransformerException {
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-        Node root = document.appendChild(document.createElement(NODE_RESOURCES));
-        for (Map.Entry<String, String> entry : strings.entrySet()) {
-            Element node = document.createElement(NODE_STRING);
-            node.setAttribute(ATTR_NAME, entry.getKey());
-            node.setTextContent(entry.getValue());
-            root.appendChild(node);
+        if (!strings.isEmpty()) {
+            Node root = document.appendChild(document.createElement(NODE_RESOURCES));
+            for (Map.Entry<String, String> entry : strings.entrySet()) {
+                Element node = document.createElement(NODE_STRING);
+                node.setAttribute(ATTR_NAME, entry.getKey());
+                node.setTextContent(entry.getValue());
+                root.appendChild(node);
+            }
         }
         // TODO plurals
+        getStringsXmlTransformer().transform(new DOMSource(document), new StreamResult(outputFile));
+    }
 
+    private static Transformer getStringsXmlTransformer() throws ParserConfigurationException, TransformerException {
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, YES);
         transformer.setOutputProperty(OutputKeys.INDENT, YES);
+        transformer.setOutputProperty(OutputKeys.ENCODING, ENCODING);
         transformer.setOutputProperty(OUTPUT_KEY_INDENT_AMOUNT, OUTPUT_VALUE_INDENT_AMOUNT);
-        transformer.transform(new DOMSource(document), new StreamResult(outputFile));
+        return transformer;
     }
 
 }

@@ -1,6 +1,8 @@
 package com.skidson.android.localization.action;
 
 import com.skidson.android.localization.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,6 +21,8 @@ public class Apply implements Action {
 
     private static final String FORMAT_VALUES_FOLDER = "values-%s";
 
+    private static final Logger LOGGER = LogManager.getLogger(Apply.class);
+
     @Override
     public void execute(String[] args) throws TransformerException, ParserConfigurationException, IOException, SAXException {
         File inputDir = new File(args[0]);
@@ -34,7 +38,7 @@ public class Apply implements Action {
 
         Map<String, File> translationStringFiles = FileUtils.findTranslationStringFiles(inputDir);
         if (translationStringFiles.isEmpty()) {
-            System.out.println("No translation files found in " + inputDir.getAbsolutePath());
+            LOGGER.error("No translation files found in " + inputDir.getAbsolutePath());
             System.exit(0);
         }
 
@@ -42,7 +46,7 @@ public class Apply implements Action {
         for (Map.Entry<String, File> entry : translationStringFiles.entrySet()) {
             Map<String, String> translatedStrings = FileUtils.parseStrings(entry.getValue());
             if (translatedStrings.isEmpty()) {
-                System.out.println("Found " + entry.getValue().getName() + " but file is empty");
+                LOGGER.info("Found " + entry.getValue().getName() + " but file is empty");
                 continue;
             }
 
@@ -51,7 +55,7 @@ public class Apply implements Action {
             if (projectStringFile == null) {
                 File projectLocaleValuesDir = new File(resDir, String.format(Locale.US, FORMAT_VALUES_FOLDER, locale));
                 if (!projectLocaleValuesDir.exists() && !projectLocaleValuesDir.mkdirs()) {
-                    System.err.println("Found translations for " + locale + " but could not create " +
+                    LOGGER.info("Found translations for " + locale + " but could not create " +
                             projectLocaleValuesDir.getName());
                     continue;
                 }
@@ -59,23 +63,24 @@ public class Apply implements Action {
             }
 
             Map<String, String> projectStrings = FileUtils.parseStrings(projectStringFile);
-            // TODO adding new translations will alter insertion order for LinkedHashMap
-            int existingSize = projectStrings.size();
-            projectStrings.putAll(translatedStrings);
+            int newCount = 0;
+            for (String translationKey : translatedStrings.keySet()) {
+                if (!projectStrings.containsKey(translationKey)) {
+                    LOGGER.info("Found new translation for " + translationKey);
+                    newCount++;
+                }
+            }
 
-            String message = translatedStrings.size() + " strings to " + projectStringFile.getParentFile().getName() +
-                    "/" + projectStringFile.getName() + " (" + (projectStrings.size() - existingSize)+ " new)";
+            LOGGER.info("Found " + translatedStrings.size() + " total translations for " + locale + " (" + newCount + " new)");
             if (!flags.contains(Flag.DRY)) {
-                FileUtils.output(projectStringFile, projectStrings);
-                System.out.println("Wrote " + message);
-            } else {
-                System.out.println("Would write " + message);
+                int updateCount = FileUtils.update(projectStringFile, translatedStrings);
+                LOGGER.info("Updated " + updateCount + " translations");
             }
         }
     }
 
     public enum Flag {
-        DRY("--dry", "-dry");
+        DRY("--dry", "--dry-run");
 
         private final String[] keys;
 
