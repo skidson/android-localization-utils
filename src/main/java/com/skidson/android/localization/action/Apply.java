@@ -15,7 +15,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Reads in all strings_XX.xml files in the specified directory
+ * Reads in all strings_XX.xml files in the specified directory and applies them to the project. This command will
+ * maintain the order and any comments of existing values-XX/strings.xml files. New translations, however, will be
+ * appended to the bottom of the file.
  * @param args
  *          0: the path to a folder containing translated strings_XX.xml files
  *          1: the path to the res folder of the project to which the translations should be applied
