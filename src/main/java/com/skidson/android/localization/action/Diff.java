@@ -1,27 +1,25 @@
 package com.skidson.android.localization.action;
 
 import com.skidson.android.localization.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
+ * Compares an incoming strings.xml file to an existing strings.xml file and lists new, modified, and removed strings.
+ * @param args
+ *          0: the path of the project's default strings.xml (e.g. <MyProject>/app/src/main/res/strings.xml)
+ *          1: the path to an updated strings.xml
+ *
  * Created by skidson on 2016-09-20.
  */
 public class Diff implements Action {
 
-    /**
-     * Searches all locale strings.xml files for translations missing from the default strings.xml and generates
-     * separate strings_XX.xml files at the specified output directory for each locale.
-     * @param args
-     *          0: the path of the project's default strings.xml (e.g. <MyProject>/app/src/main/res/strings.xml)
-     *          1: the path to the updated strings.xml
-     * @throws javax.xml.parsers.ParserConfigurationException
-     * @throws java.io.IOException
-     * @throws org.xml.sax.SAXException
-     * @throws javax.xml.transform.TransformerException
-     */
+    private static final Logger LOGGER = LogManager.getLogger(Diff.class);
+
     @Override
     public void execute(String[] args) throws Exception {
         Map<String, String> oldStrings = FileUtils.parseStrings(new File(args[0]));
@@ -50,20 +48,20 @@ public class Diff implements Action {
             }
         }
 
-        System.out.println("-------------------- MODIFIED STRINGS --------------------");
+        LOGGER.info("-------------------- MODIFIED STRINGS --------------------");
         for (Map.Entry<String, String> modifiedString : modifiedStrings.entrySet()) {
             String key = modifiedString.getKey();
-            System.out.println(key + ": " + oldStrings.get(key) + " --> " + modifiedString.getValue());
+            LOGGER.info(key + ": " + oldStrings.get(key) + " --> " + modifiedString.getValue());
         }
 
-        System.out.println("\n\n-------------------- NEW STRINGS --------------------");
+        LOGGER.info("\n\n-------------------- NEW STRINGS --------------------");
         for (Map.Entry<String, String> unmatchedString : unmatchedStrings.entrySet()) {
-            System.out.println(unmatchedString.getKey() + ": " + unmatchedString.getValue());
+            LOGGER.info(unmatchedString.getKey() + ": " + unmatchedString.getValue());
         }
 
-        System.out.println("\n\n-------------------- REMOVED STRINGS --------------------");
+        LOGGER.info("\n\n-------------------- REMOVED STRINGS --------------------");
         for (Map.Entry<String, String> removedString : removedStrings.entrySet()) {
-            System.out.println(removedString.getKey() + ": " + removedString.getValue());
+            LOGGER.info(removedString.getKey() + ": " + removedString.getValue());
         }
     }
 

@@ -1,5 +1,7 @@
 package com.skidson.android.localization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -42,6 +44,7 @@ public class FileUtils {
     private static final String OUTPUT_VALUE_INDENT_AMOUNT = "4";
     private static final String YES = "yes";
     private static final String ENCODING = "UTF-8";
+    private static final Logger LOGGER = LogManager.getLogger(FileUtils.class);
 
     /**
      * Returns a map of XX --> values-XX/strings.xml where XX is the locale. The map will include an entry for the
@@ -53,7 +56,7 @@ public class FileUtils {
     public static Map<String, File> findProjectStringFiles(File resDir) {
         File[] directories = resDir.listFiles();
         if (directories == null || directories.length < 1) {
-            System.err.println("No directories found, please verify '" + resDir.getAbsolutePath() + "' is a valid resource directory");
+            LOGGER.error("No directories found, please verify '" + resDir.getAbsolutePath() + "' is a valid resource directory");
             System.exit(1);
         }
 
@@ -83,7 +86,7 @@ public class FileUtils {
     public static Map<String, File> findTranslationStringFiles(File inputDir) {
         File[] files = inputDir.listFiles();
         if (files == null || files.length < 1) {
-            System.err.println("No strings_XX.xml found");
+            LOGGER.error("No strings_XX.xml found");
             System.exit(1);
         }
 

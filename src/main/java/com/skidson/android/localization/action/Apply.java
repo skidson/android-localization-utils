@@ -15,6 +15,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Reads in all strings_XX.xml files in the specified directory
+ * @param args
+ *          0: the path to a folder containing translated strings_XX.xml files
+ *          1: the path to the res folder of the project to which the translations should be applied
  * Created by skidson on 2016-01-19.
  */
 public class Apply implements Action {

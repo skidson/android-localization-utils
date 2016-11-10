@@ -6,19 +6,31 @@
  * For more details take a look at the Java Quickstart chapter in the Gradle
  * user guide available at https://docs.gradle.org/2.10/userguide/tutorial_java_projects.html
  */
-
-// Apply the java plugin to add support for Java
 apply plugin: 'java'
 
-// In this section you declare where to find the dependencies of your project
+version = '1.0'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+apply plugin: 'com.github.johnrengelman.shadow'
+
 repositories {
-    // Use 'jcenter' for resolving your dependencies.
-    // You can declare any Maven/Ivy/file repository here.
     jcenter()
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.skidson.android.localization.Main'
+    }
+}
+
 // In this section you declare the dependencies for your production and test code
-//noinspection GroovyAssignabilityCheck
 dependencies {
     def log4JVersion = 2.7
     compile "org.apache.logging.log4j:log4j-api:${log4JVersion}"

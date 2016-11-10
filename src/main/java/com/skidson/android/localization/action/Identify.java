@@ -1,46 +1,45 @@
 package com.skidson.android.localization.action;
 
 import com.skidson.android.localization.FileUtils;
-import org.xml.sax.SAXException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import java.io.File;
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
+ * Identifies missing translations.<br/><br/>
+ *
+ * Searches all values-XX/strings.xml files for translations missing from the default strings.xml and generates
+ * separate strings_XX.xml files at the specified output directory for each locale. These files are intended to
+ * be passed to a translation team and then passed back in to the {@link com.skidson.android.localization.action.Apply}
+ * command after being updated.
+ * @param args
+ *          0: the path of the project's resource dir (e.g. <MyProject>/app/src/main/res)
+ *          1: the path to a directory where the output strings_XX.xml files should be generated. Will be created if it
+ *          does not exist.
+ *
  * Created by skidson on 2016-01-20.
  */
 public class Identify implements Action {
 
+    private static final Logger LOGGER = LogManager.getLogger(Identify.class);
     private static final String FORMAT_OUTPUT_FILENAME = "strings_%s.xml";
 
-    /**
-     * Searches all locale strings.xml files for translations missing from the default strings.xml and generates
-     * separate strings_XX.xml files at the specified output directory for each locale.
-     * @param resPath the path of the project's resource dir (e.g. <MyProject>/app/src/main/res)
-     * @param outputPath the path to where the output strings_XX.xml files should be generated. Will be created if it does
-     *                   not exist.
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws SAXException
-     * @throws TransformerException
-     */
     @Override
     public void execute(String[] args) throws Exception {
         Map<String, File> stringFiles = FileUtils.findProjectStringFiles(new File(args[0]));
         if (stringFiles.get(null) == null) {
-            System.err.println("No default " + FileUtils.STRINGS_FILENAME + " found");
+            LOGGER.error("No default " + FileUtils.STRINGS_FILENAME + " found");
             System.exit(1);
         }
 
         File outputDirectory = new File(args[1]);
         if (!outputDirectory.exists()) {
             if (!outputDirectory.mkdirs()) {
-                System.err.println("Failed to create directory: " + outputDirectory.getAbsolutePath());
+                LOGGER.error("Failed to create directory: " + outputDirectory.getAbsolutePath());
                 System.exit(1);
             }
         }
@@ -67,7 +66,7 @@ public class Identify implements Action {
             }
 
             if (!missingStrings.isEmpty()) {
-                System.out.println("Writing " + missingStrings.size() + " missing translations to "
+                LOGGER.info("Writing " + missingStrings.size() + " missing translations to "
                         + String.format(FORMAT_OUTPUT_FILENAME, locale));
 
                 File outputFile = new File(outputDirectory, String.format(Locale.US, FORMAT_OUTPUT_FILENAME, locale));
